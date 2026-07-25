@@ -1,0 +1,345 @@
+# Curated correction table for well-known entities.
+#
+# WHY THIS EXISTS: Fundable's /industry/search and /location/search are literal
+# fuzzy-name lookups with NO synonym handling, NO relevance score, and NO
+# prominence ordering. Two concrete failure modes we hit live (2026-07-22):
+#
+#  1. Common shorthand returns ZERO results, so the filter silently drops:
+#       "healthcare"  -> nothing (Fundable spells it "Health Care")
+#       "cybersecurity" -> nothing ("Cyber Security")
+#       "ecommerce"   -> nothing ("E-Commerce")
+#       "ml"          -> nothing ("Machine Learning")
+#     ...and "ai" matches "Agentic AI" before "Artificial Intelligence".
+#
+#  2. A name can match several places/permalinks with no way to rank them
+#       "New York" -> New York, Chiapas (Mexico) is returned before NYC.
+#
+# So each entry below pairs the TERM a human types with (a) the `search` string
+# Fundable actually accepts and (b) the exact `permalink` to select. This is NOT
+# guessing: the resolver only uses a permalink if that exact value appears in the
+# live search results. Every permalink here was verified against the live API.
+# Extend freely — anything not listed falls through to normal search.
+
+# ---- locations: term -> canonical permalink (picked from live results) -------
+locations:
+  "new york": new-york-new-york
+  "nyc": new-york-new-york
+  "america": united-states
+  "usa": united-states
+  "us": united-states
+  "united states": united-states
+  "the states": united-states
+  "san francisco": san-francisco-california
+  "sf": san-francisco-california
+  "los angeles": los-angeles-california
+  "la": los-angeles-california
+  "london": london-england
+  "boston": boston-massachusetts
+  "austin": austin-texas
+  "seattle": seattle-washington
+  "chicago": chicago-illinois
+  "berlin": berlin-berlin
+  "paris": paris-ile-de-france
+  "toronto": toronto-ontario
+  "singapore": singapore-singapore
+  "tel aviv": tel-aviv-tel-aviv
+
+# ---- industries: term -> {search string Fundable accepts, permalink to pick} --
+# `search` is what we send to /industry/search; `permalink` is verified-live.
+industry_aliases:
+  "healthcare":       {search: "health care",            permalink: health-care}
+  "health care":      {search: "health care",            permalink: health-care}
+  "healthtech":       {search: "health care",            permalink: health-care}
+  "health tech":      {search: "health care",            permalink: health-care}
+  "digital health":   {search: "health care",            permalink: health-care}
+  "medtech":          {search: "medical device",         permalink: medical-device}
+  "medical technology": {search: "medical device",       permalink: medical-device}
+  "cybersecurity":    {search: "cyber security",         permalink: cyber-security}
+  "cyber security":   {search: "cyber security",         permalink: cyber-security}
+  "ecommerce":        {search: "e-commerce",             permalink: e-commerce-275d}
+  "e commerce":       {search: "e-commerce",             permalink: e-commerce-275d}
+  "climate":          {search: "clean energy",           permalink: clean-energy}
+  "climate tech":     {search: "clean energy",           permalink: clean-energy}
+  "climatetech":      {search: "clean energy",           permalink: clean-energy}
+  "cleantech":        {search: "clean energy",           permalink: clean-energy}
+  "ml":               {search: "machine learning",       permalink: machine-learning}
+  "machine learning": {search: "machine learning",       permalink: machine-learning}
+  "ai":               {search: "artificial intelligence", permalink: artificial-intelligence}
+  "artificial intelligence": {search: "artificial intelligence", permalink: artificial-intelligence}
+  "crypto":           {search: "cryptocurrency",         permalink: cryptocurrency}
+  "cryptocurrency":   {search: "cryptocurrency",         permalink: cryptocurrency}
+  "fintech":          {search: "fintech",                permalink: fintech-e067}
+  "saas":             {search: "saas",                   permalink: saas-5c4e}
+
+# ---- city nicknames / abbreviations / metros (verified live) ----
+location_aliases:
+  atl:
+    permalink: atlanta-georgia
+    search: Atlanta
+  atlanta:
+    permalink: atlanta-georgia
+    search: Atlanta
+  atx:
+    permalink: austin-texas
+    search: Austin
+  austin:
+    permalink: austin-texas
+    search: Austin
+  bay area:
+    permalink: san-francisco-california
+    search: San Francisco
+  beantown:
+    permalink: boston-massachusetts
+    search: Boston
+  bellevue:
+    permalink: bellevue-washington
+    search: Bellevue
+  berkeley:
+    permalink: berkeley-california
+    search: Berkeley
+  big apple:
+    permalink: new-york-new-york
+    search: New York
+  boston:
+    permalink: boston-massachusetts
+    search: Boston
+  cambridge:
+    permalink: cambridge-massachusetts
+    search: Cambridge
+  chi:
+    permalink: chicago-illinois
+    search: Chicago
+  chi town:
+    permalink: chicago-illinois
+    search: Chicago
+  chi-town:
+    permalink: chicago-illinois
+    search: Chicago
+  chicago:
+    permalink: chicago-illinois
+    search: Chicago
+  d.c.:
+    permalink: washington-district-of-columbia
+    search: Washington
+  dallas:
+    permalink: dallas-texas
+    search: Dallas
+  dc:
+    permalink: washington-district-of-columbia
+    search: Washington
+  denver:
+    permalink: denver-colorado-b063
+    search: Denver
+  detroit:
+    permalink: detroit-michigan
+    search: Detroit
+  dfw:
+    permalink: dallas-texas
+    search: Dallas
+  dmv:
+    permalink: washington-district-of-columbia
+    search: Washington
+  emerald city:
+    permalink: seattle-washington
+    search: Seattle
+  emeryville:
+    permalink: emeryville-california
+    search: Emeryville
+  frisco:
+    permalink: san-francisco-california
+    search: San Francisco
+  greater boston:
+    permalink: boston-massachusetts
+    search: Boston
+  greater miami:
+    permalink: miami-florida
+    search: Miami
+  greater seattle:
+    permalink: seattle-washington
+    search: Seattle
+  h town:
+    permalink: houston-texas
+    search: Houston
+  h-town:
+    permalink: houston-texas
+    search: Houston
+  hollywood:
+    permalink: los-angeles-california
+    search: Los Angeles
+  houston:
+    permalink: houston-texas
+    search: Houston
+  htown:
+    permalink: houston-texas
+    search: Houston
+  kendall square:
+    permalink: cambridge-massachusetts
+    search: Cambridge
+  l.a.:
+    permalink: los-angeles-california
+    search: Los Angeles
+  la:
+    permalink: los-angeles-california
+    search: Los Angeles
+  las vegas:
+    permalink: las-vegas-nevada
+    search: Las Vegas
+  los angeles:
+    permalink: los-angeles-california
+    search: Los Angeles
+  manhattan:
+    permalink: new-york-new-york
+    search: New York
+  menlo park:
+    permalink: menlo-park-california
+    search: Menlo Park
+  metroplex:
+    permalink: dallas-texas
+    search: Dallas
+  miami:
+    permalink: miami-florida
+    search: Miami
+  mile high city:
+    permalink: denver-colorado-b063
+    search: Denver
+  minneapolis:
+    permalink: minneapolis-minnesota
+    search: Minneapolis
+  motor city:
+    permalink: detroit-michigan
+    search: Detroit
+  mountain view:
+    permalink: mountain-view-california
+    search: Mountain View
+  msp:
+    permalink: minneapolis-minnesota
+    search: Minneapolis
+  music city:
+    permalink: nashville-tennessee-4e91
+    search: Nashville
+  nashville:
+    permalink: nashville-tennessee-4e91
+    search: Nashville
+  new orleans:
+    permalink: new-orleans-louisiana
+    search: New Orleans
+  new york:
+    permalink: new-york-new-york
+    search: New York
+  nola:
+    permalink: new-orleans-louisiana
+    search: New Orleans
+  ny:
+    permalink: new-york-new-york
+    search: New York
+  nyc:
+    permalink: new-york-new-york
+    search: New York
+  oakland:
+    permalink: oakland-california
+    search: Oakland
+  palo alto:
+    permalink: palo-alto-california
+    search: Palo Alto
+  pdx:
+    permalink: portland-oregon
+    search: Portland
+  philadelphia:
+    permalink: philadelphia-pennsylvania
+    search: Philadelphia
+  philly:
+    permalink: philadelphia-pennsylvania
+    search: Philadelphia
+  phoenix:
+    permalink: phoenix-arizona
+    search: Phoenix
+  portland:
+    permalink: portland-oregon
+    search: Portland
+  redmond:
+    permalink: redmond-washington
+    search: Redmond
+  redwood city:
+    permalink: redwood-city-california
+    search: Redwood City
+  s.f.:
+    permalink: san-francisco-california
+    search: San Francisco
+  salt lake:
+    permalink: salt-lake-city-utah
+    search: Salt Lake City
+  salt lake city:
+    permalink: salt-lake-city-utah
+    search: Salt Lake City
+  san diego:
+    permalink: san-diego-california
+    search: San Diego
+  san fran:
+    permalink: san-francisco-california
+    search: San Francisco
+  san francisco:
+    permalink: san-francisco-california
+    search: San Francisco
+  san francisco bay area:
+    permalink: san-francisco-california
+    search: San Francisco
+  san jose:
+    permalink: san-jose-california
+    search: San Jose
+  san mateo:
+    permalink: san-mateo-california
+    search: San Mateo
+  sd:
+    permalink: san-diego-california
+    search: San Diego
+  seattle:
+    permalink: seattle-washington
+    search: Seattle
+  sf:
+    permalink: san-francisco-california
+    search: San Francisco
+  sf bay area:
+    permalink: san-francisco-california
+    search: San Francisco
+  silicon beach:
+    permalink: los-angeles-california
+    search: Los Angeles
+  sin city:
+    permalink: las-vegas-nevada
+    search: Las Vegas
+  slc:
+    permalink: salt-lake-city-utah
+    search: Salt Lake City
+  socal:
+    permalink: los-angeles-california
+    search: Los Angeles
+  soflo:
+    permalink: miami-florida
+    search: Miami
+  south florida:
+    permalink: miami-florida
+    search: Miami
+  south san francisco:
+    permalink: south-san-francisco-california
+    search: South San Francisco
+  twin cities:
+    permalink: minneapolis-minnesota
+    search: Minneapolis
+  valley of the sun:
+    permalink: phoenix-arizona
+    search: Phoenix
+  vegas:
+    permalink: las-vegas-nevada
+    search: Las Vegas
+  washington:
+    permalink: washington-district-of-columbia
+    search: Washington
+  washington d.c.:
+    permalink: washington-district-of-columbia
+    search: Washington
+  washington dc:
+    permalink: washington-district-of-columbia
+    search: Washington
+  windy city:
+    permalink: chicago-illinois
+    search: Chicago

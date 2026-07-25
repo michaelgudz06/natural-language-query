@@ -1,0 +1,553 @@
+{
+ "_meta": {
+  "description": "Curated balanced eval set for architecture comparison",
+  "count": 30
+ },
+ "cases": [
+  {
+   "input": "Find seed-stage fintech deals in San Francisco.",
+   "expected_route": "POST /deals",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "fintech"
+    },
+    {
+     "type": "location",
+     "query": "San Francisco"
+    }
+   ],
+   "expected_filter_paths": [
+    "deal.financing_types",
+    "company.industries",
+    "company.locations"
+   ],
+   "forbidden_paths": [
+    "company.search_query"
+   ],
+   "notes": "Industry permalink, not search_query."
+  },
+  {
+   "input": "Series C+ deals in fintech",
+   "expected_route": "POST /deals",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "fintech"
+    }
+   ],
+   "expected_filter_paths": [
+    "deal.financing_types",
+    "company.industries"
+   ],
+   "forbidden_paths": [],
+   "notes": "C+ expands C..M"
+  },
+  {
+   "input": "climate deals in 2024",
+   "expected_route": "POST /deals",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "climate"
+    }
+   ],
+   "expected_filter_paths": [
+    "company.industries",
+    "deal.date_start",
+    "deal.date_end"
+   ],
+   "forbidden_paths": [],
+   "notes": "alias: climate->clean energy"
+  },
+  {
+   "input": "Largest raises in climate tech in 2024.",
+   "expected_route": "POST /deals",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "climate"
+    }
+   ],
+   "expected_filter_paths": [
+    "company.industries",
+    "deal.date_start",
+    "deal.date_end",
+    "sort_by"
+   ],
+   "forbidden_paths": [],
+   "notes": "sort_by=largest_raise; year -> start+end."
+  },
+  {
+   "input": "fintech deals in SF, NYC, and London",
+   "expected_route": "POST /deals",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "fintech"
+    },
+    {
+     "type": "location",
+     "query": "SF"
+    },
+    {
+     "type": "location",
+     "query": "NYC"
+    },
+    {
+     "type": "location",
+     "query": "London"
+    }
+   ],
+   "expected_filter_paths": [
+    "company.industries",
+    "company.locations"
+   ],
+   "forbidden_paths": [],
+   "notes": "3 loc + abbrevs"
+  },
+  {
+   "input": "Funding rounds led by Andreessen Horowitz in fintech.",
+   "expected_route": "POST /deals",
+   "expected_resolvers": [
+    {
+     "type": "investor",
+     "query": "a16z"
+    },
+    {
+     "type": "industry",
+     "query": "fintech"
+    }
+   ],
+   "expected_filter_paths": [
+    "investors.investor_ids",
+    "company.industries"
+   ],
+   "forbidden_paths": [],
+   "notes": "Investor NER + industry."
+  },
+  {
+   "input": "biggest healthcare rounds in New York",
+   "expected_route": "POST /deals",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "healthcare"
+    },
+    {
+     "type": "location",
+     "query": "New York"
+    }
+   ],
+   "expected_filter_paths": [
+    "company.industries",
+    "company.locations",
+    "sort_by"
+   ],
+   "forbidden_paths": [],
+   "notes": "sort largest_raise"
+  },
+  {
+   "input": "Find seed-stage AI startups in SF.",
+   "expected_route": "POST /companies",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "AI"
+    },
+    {
+     "type": "location",
+     "query": "SF"
+    }
+   ],
+   "expected_filter_paths": [
+    "latest_deal.financing_types",
+    "company.industries",
+    "company.locations"
+   ],
+   "forbidden_paths": [
+    "company.search_query"
+   ],
+   "notes": "Ambiguous startup query defaults to companies."
+  },
+  {
+   "input": "healthcare companies in Boston",
+   "expected_route": "POST /companies",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "healthcare"
+    },
+    {
+     "type": "location",
+     "query": "Boston"
+    }
+   ],
+   "expected_filter_paths": [
+    "company.industries",
+    "company.locations"
+   ],
+   "forbidden_paths": [],
+   "notes": "alias: healthcare->health-care"
+  },
+  {
+   "input": "cybersecurity startups in New York",
+   "expected_route": "POST /companies",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "cybersecurity"
+    },
+    {
+     "type": "location",
+     "query": "New York"
+    }
+   ],
+   "expected_filter_paths": [
+    "company.industries",
+    "company.locations"
+   ],
+   "forbidden_paths": [],
+   "notes": "alias: cyber security"
+  },
+  {
+   "input": "companies in San Francisco or New York or Chicago",
+   "expected_route": "POST /companies",
+   "expected_resolvers": [
+    {
+     "type": "location",
+     "query": "San Francisco"
+    },
+    {
+     "type": "location",
+     "query": "New York"
+    },
+    {
+     "type": "location",
+     "query": "Chicago"
+    }
+   ],
+   "expected_filter_paths": [
+    "company.locations"
+   ],
+   "forbidden_paths": [],
+   "notes": "3 locations OR"
+  },
+  {
+   "input": "startups building AI copilots for hospital billing",
+   "expected_route": "POST /companies",
+   "expected_resolvers": [],
+   "expected_filter_paths": [
+    "company.search_query"
+   ],
+   "forbidden_paths": [
+    "company.industries"
+   ],
+   "notes": "semantic, no clean industry"
+  },
+  {
+   "input": "Series B fintech companies in New York that raised over $20M",
+   "expected_route": "POST /companies",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "fintech"
+    },
+    {
+     "type": "location",
+     "query": "New York"
+    }
+   ],
+   "expected_filter_paths": [
+    "company.industries",
+    "company.locations",
+    "latest_deal.financing_types"
+   ],
+   "forbidden_paths": [],
+   "notes": "object=companies despite raised"
+  },
+  {
+   "input": "Most active VC firms in climate.",
+   "expected_route": "POST /investors",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "climate"
+    }
+   ],
+   "expected_filter_paths": [
+    "company_investments.industries",
+    "sort_by"
+   ],
+   "forbidden_paths": [],
+   "notes": "sort_by=recent_deals."
+  },
+  {
+   "input": "Funds that led at least 3 Series A deals in fintech.",
+   "expected_route": "POST /investors",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "fintech"
+    }
+   ],
+   "expected_filter_paths": [
+    "company_investments.industries",
+    "company_investments.financing_types",
+    "company_investments.min_matching_deals",
+    "company_investments.only_lead_deals"
+   ],
+   "forbidden_paths": [],
+   "notes": "min_matching_deals=3."
+  },
+  {
+   "input": "VC firms in London that back healthcare startups",
+   "expected_route": "POST /investors",
+   "expected_resolvers": [
+    {
+     "type": "location",
+     "query": "London"
+    },
+    {
+     "type": "industry",
+     "query": "healthcare"
+    }
+   ],
+   "expected_filter_paths": [
+    "investor.locations",
+    "company_investments.industries"
+   ],
+   "forbidden_paths": [],
+   "notes": "investor HQ + portfolio"
+  },
+  {
+   "input": "Investors backing crypto companies in Berlin.",
+   "expected_route": "POST /investors",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "crypto"
+    },
+    {
+     "type": "location",
+     "query": "Berlin"
+    }
+   ],
+   "expected_filter_paths": [
+    "company_investments.industries",
+    "company_investments.locations"
+   ],
+   "forbidden_paths": [],
+   "notes": ""
+  },
+  {
+   "input": "who invested in Stripe",
+   "expected_route": "POST /investors",
+   "expected_resolvers": [
+    {
+     "type": "company",
+     "query": "Stripe"
+    }
+   ],
+   "expected_filter_paths": [
+    "company_investments.company_ids"
+   ],
+   "forbidden_paths": [],
+   "notes": "EDGE: investors of a named company"
+  },
+  {
+   "input": "Investors with the most total deals.",
+   "expected_route": "POST /investors",
+   "expected_resolvers": [],
+   "expected_filter_paths": [
+    "sort_by"
+   ],
+   "forbidden_paths": [],
+   "notes": "sort_by=total_deals."
+  },
+  {
+   "input": "most active investors in climate",
+   "expected_route": "POST /investors",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "climate"
+    }
+   ],
+   "expected_filter_paths": [
+    "company_investments.industries",
+    "sort_by"
+   ],
+   "forbidden_paths": [],
+   "notes": "sort recent_deals"
+  },
+  {
+   "input": "Founders of fintech companies in San Francisco.",
+   "expected_route": "POST /people",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "fintech"
+    },
+    {
+     "type": "location",
+     "query": "San Francisco"
+    }
+   ],
+   "expected_filter_paths": [
+    "person.roles",
+    "company.industries",
+    "company.locations"
+   ],
+   "forbidden_paths": [],
+   "notes": "roles=founder."
+  },
+  {
+   "input": "CEOs of AI startups that raised Series A.",
+   "expected_route": "POST /people",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "AI"
+    }
+   ],
+   "expected_filter_paths": [
+    "person.roles",
+    "company.industries",
+    "company.latest_deal.financing_types"
+   ],
+   "forbidden_paths": [],
+   "notes": "roles=ceo."
+  },
+  {
+   "input": "Angels who invested in climate deals.",
+   "expected_route": "POST /people",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "climate"
+    }
+   ],
+   "expected_filter_paths": [
+    "investor.deals.industries"
+   ],
+   "forbidden_paths": [],
+   "notes": "person_type=investor; angel."
+  },
+  {
+   "input": "Founders who previously worked at Google.",
+   "expected_route": "POST /people",
+   "expected_resolvers": [],
+   "expected_filter_paths": [
+    "person.roles",
+    "person.linkedin_companies"
+   ],
+   "forbidden_paths": [],
+   "notes": "linkedin_companies=google."
+  },
+  {
+   "input": "founders of cybersecurity companies in Boston",
+   "expected_route": "POST /people",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "cybersecurity"
+    },
+    {
+     "type": "location",
+     "query": "Boston"
+    }
+   ],
+   "expected_filter_paths": [
+    "person.roles",
+    "company.industries",
+    "company.locations"
+   ],
+   "forbidden_paths": [],
+   "notes": "people + alias"
+  },
+  {
+   "input": "partners who led Series B deals in fintech",
+   "expected_route": "POST /people",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "fintech"
+    }
+   ],
+   "expected_filter_paths": [
+    "investor.deals.industries",
+    "investor.deals.financing_types",
+    "investor.deals.only_lead_deals"
+   ],
+   "forbidden_paths": [],
+   "notes": "lead partners"
+  },
+  {
+   "input": "CTOs of healthcare companies in Boston.",
+   "expected_route": "POST /people",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "healthcare"
+    },
+    {
+     "type": "location",
+     "query": "Boston"
+    }
+   ],
+   "expected_filter_paths": [
+    "person.job_titles",
+    "company.industries",
+    "company.locations"
+   ],
+   "forbidden_paths": [],
+   "notes": "job_titles=cto."
+  },
+  {
+   "input": "companies in Springfield",
+   "expected_route": "POST /companies",
+   "expected_resolvers": [
+    {
+     "type": "location",
+     "query": "Springfield"
+    }
+   ],
+   "expected_filter_paths": [],
+   "forbidden_paths": [],
+   "notes": "EDGE: ambiguous location -> clarify"
+  },
+  {
+   "input": "Deals or companies in AI in SF?",
+   "expected_route": "POST /companies",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "AI"
+    },
+    {
+     "type": "location",
+     "query": "SF"
+    }
+   ],
+   "expected_filter_paths": [],
+   "forbidden_paths": [],
+   "notes": "EDGE: explicit route ambiguity -> should clarify deals vs companies."
+  },
+  {
+   "input": "show me AI",
+   "expected_route": "POST /companies",
+   "expected_resolvers": [
+    {
+     "type": "industry",
+     "query": "AI"
+    }
+   ],
+   "expected_filter_paths": [
+    "company.industries"
+   ],
+   "forbidden_paths": [],
+   "notes": "EDGE: vague object -> default companies"
+  }
+ ]
+}

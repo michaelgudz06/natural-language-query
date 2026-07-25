@@ -1,0 +1,39 @@
+# Deterministic phrase -> financing_type object mapping (Sprint 1 / Sprint 3).
+# Round types are NOT resolver-backed — they are a fixed enum, so we map them
+# in code with no API lookup. Keys are lowercased, punctuation-stripped phrases.
+#
+# Each value compiles to a financing_types[] object: {type, pre?, extension?}
+
+phrases:
+  "pre-seed":            { type: SEED, pre: true }
+  "preseed":             { type: SEED, pre: true }
+  "pre seed":            { type: SEED, pre: true }
+  "seed":                { type: SEED }
+  "seed extension":      { type: SEED, extension: true }
+  "series a":            { type: SERIES_A }
+  "series a extension":  { type: SERIES_A, extension: true }
+  "series b":            { type: SERIES_B }
+  "series b extension":  { type: SERIES_B, extension: true }
+  "series c":            { type: SERIES_C }
+  "series d":            { type: SERIES_D }
+  "series e":            { type: SERIES_E }
+  "series f":            { type: SERIES_F }
+  "safe":                { type: SAFE }
+  "convertible note":    { type: CONVERTIBLE_NOTE }
+  "convertible":         { type: CONVERTIBLE_NOTE }
+  "grant":               { type: GRANT }
+  "debt":                { type: DEBT_FINANCING }
+  "debt financing":      { type: DEBT_FINANCING }
+  "venture debt":        { type: DEBT_FINANCING }
+  "crowdfunding":        { type: CROWDFUNDING }
+  "ico":                 { type: INITIAL_COIN_OFFERING }
+  "token sale":          { type: INITIAL_COIN_OFFERING }
+  "secondary":           { type: SECONDARY_MARKET }
+  "equity":              { type: EQUITY }
+  "preferred":           { type: PREFERRED }
+
+# Phrases that expand to MULTIPLE financing_types objects.
+expansions:
+  "early stage":     [{ type: SEED, pre: true }, { type: SEED }, { type: SERIES_A }]
+  "late stage":      [{ type: SERIES_C }, { type: SERIES_D }, { type: SERIES_E }]
+  "growth":          [{ type: SERIES_C }, { type: SERIES_D }, { type: SERIES_E }, { type: SERIES_F }]

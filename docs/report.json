@@ -1,0 +1,205 @@
+{
+  "generated": "2026-07-23",
+  "n": 109,
+  "production_model": "google/gemini-3.5-flash-lite",
+  "provider": "OpenRouter \u2192 Google",
+  "pricing_per_m": {
+    "in": 0.3,
+    "out": 2.5
+  },
+  "parallel_resolvers": true,
+  "metrics": {
+    "route_accuracy": 0.926605504587156,
+    "api_valid_rate": 1.0,
+    "json_validity_rate": 1.0,
+    "filter_accuracy": 0.7818042813455658,
+    "resolver_field_f1": 0.9785932721712539,
+    "industry_first_rate": 1.0,
+    "sq_industry_clean_rate": 1.0,
+    "no_guessed_permalink_rate": 1.0,
+    "avg_in_tokens": 1021,
+    "avg_out_tokens": 156,
+    "cost_per_1k": 0.697,
+    "model_p50_ms": 1133.6,
+    "model_p95_ms": 1674.3,
+    "plan_excl_resolver_p50_ms": 1134,
+    "plan_excl_resolver_p95_ms": 1674,
+    "plan_incl_resolver_p50_ms": 2090,
+    "plan_incl_resolver_p95_ms": 2764
+  },
+  "models_tested": [
+    {
+      "model": "google/gemini-3.5-flash-lite",
+      "provider": "OpenRouter/Google",
+      "price_in": 0.3,
+      "price_out": 2.5,
+      "route_acc": 0.96,
+      "avg_in": 863,
+      "avg_out": 137,
+      "cost_per_1k": 0.6,
+      "model_p50": 999,
+      "model_p95": 1458
+    },
+    {
+      "model": "google/gemini-2.5-flash",
+      "provider": "OpenRouter/Google",
+      "price_in": 0.3,
+      "price_out": 2.5,
+      "route_acc": 0.95,
+      "avg_in": 678,
+      "avg_out": 145,
+      "cost_per_1k": 0.57,
+      "model_p50": 1237,
+      "model_p95": 1465
+    },
+    {
+      "model": "openai/gpt-4o-mini",
+      "provider": "OpenRouter/OpenAI",
+      "price_in": 0.15,
+      "price_out": 0.6,
+      "route_acc": 0.93,
+      "avg_in": 830,
+      "avg_out": 95,
+      "cost_per_1k": 0.18,
+      "model_p50": 1802,
+      "model_p95": 2652
+    },
+    {
+      "model": "openai/gpt-5.1",
+      "provider": "OpenRouter/OpenAI",
+      "price_in": 1.25,
+      "price_out": 10.0,
+      "route_acc": 0.91,
+      "avg_in": 825,
+      "avg_out": 115,
+      "cost_per_1k": 2.18,
+      "model_p50": 1810,
+      "model_p95": 2953
+    },
+    {
+      "model": "google/gemma-4-31b-it",
+      "provider": "OpenRouter/Google",
+      "price_in": 0.12,
+      "price_out": 0.35,
+      "route_acc": 0.93,
+      "avg_in": 900,
+      "avg_out": 140,
+      "cost_per_1k": 0.13,
+      "model_p50": 3422,
+      "model_p95": 6241
+    },
+    {
+      "model": "google/gemini-2.5-flash-lite",
+      "provider": "OpenRouter/Google",
+      "price_in": 0.1,
+      "price_out": 0.4,
+      "route_acc": 0.86,
+      "avg_in": 678,
+      "avg_out": 145,
+      "cost_per_1k": 0.13,
+      "model_p50": 903,
+      "model_p95": 1625
+    }
+  ],
+  "acceptance": [
+    {
+      "name": "Route selection accuracy \u2265 90%",
+      "value": "93%",
+      "pass": true
+    },
+    {
+      "name": "Request bodies API-valid \u2265 95%",
+      "value": "100%",
+      "pass": true
+    },
+    {
+      "name": "Resolver-backed fields \u2265 95% correct",
+      "value": "F1 98%",
+      "pass": true
+    },
+    {
+      "name": "Industry terms via /industry/search before search_query",
+      "value": "100%",
+      "pass": true
+    },
+    {
+      "name": "Never guesses location/industry permalinks",
+      "value": "100%",
+      "pass": true
+    },
+    {
+      "name": "Never search_query + industries in same block",
+      "value": "100%",
+      "pass": true
+    },
+    {
+      "name": "All 4 POST endpoints + documented filters (schema map)",
+      "value": "yes",
+      "pass": true
+    },
+    {
+      "name": "Test set + evaluation harness included",
+      "value": "109 cases + harness",
+      "pass": true
+    },
+    {
+      "name": "API dry-run validation in harness",
+      "value": "page_size:1 live",
+      "pass": true
+    },
+    {
+      "name": "Model/resolver latency, tokens, cost/1k reported",
+      "value": "this report",
+      "pass": true
+    },
+    {
+      "name": "Model strategy justified by evaluation",
+      "value": "bakeoff (10 configs)",
+      "pass": true
+    }
+  ],
+  "all_pass": true,
+  "route_misses": [
+    {
+      "q": "Fintech companies in New York that raised Series A.",
+      "exp": "POST /companies",
+      "got": "POST /deals"
+    },
+    {
+      "q": "AI companies in San Francisco that raised seed in the last 12 months.",
+      "exp": "POST /companies",
+      "got": "POST /deals"
+    },
+    {
+      "q": "Most active angels investing in AI.",
+      "exp": "POST /investors",
+      "got": "POST /people"
+    },
+    {
+      "q": "Angel investors active in AI in the last 12 months.",
+      "exp": "POST /people",
+      "got": "POST /investors"
+    },
+    {
+      "q": "Find seed-stage AI in SF.",
+      "exp": "POST /companies",
+      "got": "POST /deals"
+    },
+    {
+      "q": "Accel investments in fintech.",
+      "exp": "POST /investors",
+      "got": "POST /deals"
+    },
+    {
+      "q": "AI companies with 1001-5000 employees that raised Series C",
+      "exp": "POST /companies",
+      "got": "POST /deals"
+    },
+    {
+      "q": "Series B fintech companies in New York that raised over $20M",
+      "exp": "POST /companies",
+      "got": "POST /deals"
+    }
+  ],
+  "recommendation": "Single model, no router: google/gemini-3.5-flash-lite. Chosen by the architecture bakeoff \u2014 it tied for best route accuracy at the fastest latency, and the router/orchestrator variants added cost/latency without accuracy. Parallel resolvers keep end-to-end fast. Cheaper single-model options (gpt-4o-mini, gemma-4-31b) trade a little accuracy or a lot of latency; gemini-3.5-flash-lite is the balanced pick."
+}

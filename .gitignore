@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+planner.log.jsonl
+.env

@@ -1,0 +1,341 @@
+# =============================================================================
+# Fundable API Schema Map  (Sprint 1 deliverable)
+# =============================================================================
+# Single source of truth for what each POST endpoint accepts. The deterministic
+# compiler validates every generated request body against this file BEFORE it is
+# sent to the API, so the planner can never emit an unsupported field, a bad
+# enum, or an illegal field combination.
+#
+# Source: https://docs.tryfundable.ai/api-reference/  (fetched 2026-07-22)
+# Regenerate/validate against OpenAPI on build — see docs/SCHEMA_DRIFT.md
+# =============================================================================
+
+meta:
+  fetched: "2026-07-22"
+  base_url: "https://www.tryfundable.ai/api/v1"   # CONFIRMED live 2026-07-22
+  auth: "Bearer vg_<api_key>"
+
+# -----------------------------------------------------------------------------
+# Shared enums (referenced by $ref-style names below to avoid duplication)
+# -----------------------------------------------------------------------------
+enums:
+  financing_type:
+    # Deterministic mapping from human phrases lives in config/round_types.yaml.
+    # A bad value here returns a HARD 422 (unlike locations/industries which fail silently).
+    - SERIES_A
+    - SERIES_B
+    - SERIES_C
+    - SERIES_D
+    - SERIES_E
+    - SERIES_F
+    - SERIES_G
+    - SERIES_H
+    - SERIES_I
+    - SERIES_J
+    - SERIES_K
+    - SERIES_L
+    - SERIES_M
+    - SEED
+    - SAFE
+    - CONVERTIBLE_NOTE
+    - EQUITY
+    - PREFERRED
+    - SECONDARY_MARKET
+    - DEBT_FINANCING
+    - GRANT
+    - NON_EQUITY_ASSISTANCE
+    - CROWDFUNDING
+    - INITIAL_COIN_OFFERING
+    - FUNDING_ROUND
+
+  employee_count:
+    - "1-10"
+    - "11-50"
+    - "51-100"
+    - "101-250"
+    - "251-500"
+    - "501-1000"
+    - "1001-5000"
+    - "5001-10000"
+    - "10001+"
+
+  ipo_status_basic:            # companies / investors / deals.company
+    - public
+    - private
+
+  ipo_status_extended:         # people.company block ONLY
+    - public
+    - private
+    - acquired
+    - delisted
+
+  person_role:
+    - founder
+    - ceo
+    - key_person
+
+  person_contact_type:
+    - linkedin
+    - email
+    - phone
+    - twitter
+
+  investment_type:
+    - all
+    - angel
+    - institutional
+
+# The financing_types array is an array of OBJECTS, not strings.
+# { type: <financing_type>, pre?: bool, extension?: bool }
+financing_type_object:
+  type: { enum_ref: financing_type, required: true }
+  pre: { type: boolean, default: false }
+  extension: { type: boolean, default: false }
+
+# -----------------------------------------------------------------------------
+# Resolver-backed fields: NEVER guess these. Must come from a lookup endpoint.
+# A wrong permalink is SILENTLY DROPPED -> zero/garbage results, no error.
+# -----------------------------------------------------------------------------
+resolvers:
+  location:
+    endpoint: "GET /location/search"
+    params: { name: "<display name>", type: "CITY|STATE|REGION|COUNTRY (optional)" }
+    returns: { permalink: string, name: string, location_type: string }
+    exposes_score: false        # <-- IMPORTANT: no confidence field is returned
+  industry:
+    endpoint: "GET /industry/search"
+    params: { name: "<display name>", type: "INDUSTRY|SUPER_CATEGORY (optional)" }
+    returns: { permalink: string, name: string, industry_type: string }
+    exposes_score: false        # <-- no confidence field; disambiguation is name-match only
+  company:
+    endpoint: "GET /company/search"     # returns UUIDs for *_ids fields
+    returns: { id: uuid, name: string, domain: string }
+  investor:
+    endpoint: "GET /investor/search"
+    returns: { id: uuid, name: string, domain: string }
+  people:
+    endpoint: "GET /people/search"
+    returns: { id: uuid, name: string, linkedin_url: string }
+
+# Fields that must be filled from a resolver, keyed by dotted path fragment.
+resolver_backed_fields:
+  "*.locations": location
+  "*.industries": industry
+  "*.super_categories": industry
+  "*.portfolio_locations": location
+  "*.investor_locations": location
+  "company.company_ids": company
+  "identifiers.ids": company        # entity-dependent; see per-endpoint notes
+  "investors.investor_ids": investor
+  "investors.people_ids": people
+
+# -----------------------------------------------------------------------------
+# HARD PRODUCT RULES (compiler rejects violations even if the model emits them)
+# -----------------------------------------------------------------------------
+rules:
+  # In any block that supports BOTH structured industry filters and semantic
+  # search, the two must never coexist. Prefer structured; fall back to search.
+  mutually_exclusive_within_block:
+    - group: [search_query, industries, super_categories]
+      applies_to_blocks:
+        - "companies.company"
+        - "investors.company_investments"
+        - "people.company"
+        - "people.investor.deals"
+      message: "search_query cannot be combined with industries/super_categories in the same block."
+
+  # min_relevance only means anything when search_query is present.
+  requires_companion:
+    - field: min_relevance
+      requires: search_query
+      message: "min_relevance is only valid alongside search_query."
+
+  # Compiler hygiene, applied everywhere.
+  compiler_hygiene:
+    - omit_empty_arrays: true
+    - omit_null_fields: true
+    - drop_unknown_fields: true
+    - dedupe_array_values: true
+    - reject_invalid_enum: true         # invalid financing_type -> 422, catch pre-flight
+
+# =============================================================================
+# ENDPOINTS
+# =============================================================================
+endpoints:
+
+  # ---------------------------------------------------------------------------
+  "POST /deals":
+    returns: deal
+    default_sort: most_recent_deal
+    sort_options: [most_recent_deal, oldest_deal, largest_raise, smallest_raise]
+    pagination: { page: {type: int, default: 0}, page_size: {type: int, default: 10, min: 1, max: 500} }
+    blocks:
+      identifiers:
+        deal_ids: { type: uuid_array }
+      deal:
+        financing_types: { type: financing_type_object_array }
+        size_min: { type: number }
+        size_max: { type: number }
+        date_start: { type: iso_date }         # announcement date
+        date_end: { type: iso_date }
+        created_start: { type: iso_date }       # ingestion date
+        created_end: { type: iso_date }
+      company:
+        company_ids: { type: uuid_array, resolver: company }
+        locations: { type: string_array, resolver: location }
+        industries: { type: string_array, resolver: industry }
+        super_categories: { type: string_array, resolver: industry }
+        employee_count: { type: enum_array, enum_ref: employee_count }
+        ipo_status: { type: enum_array, enum_ref: ipo_status_basic }
+        total_raised_min: { type: number }
+        total_raised_max: { type: number }
+        # NOTE: /deals.company does NOT expose search_query. Industry-only here.
+      investors:
+        investor_ids: { type: uuid_array, resolver: investor }
+        people_ids: { type: uuid_array, resolver: people }   # angels or lead partners
+
+  # ---------------------------------------------------------------------------
+  "POST /companies":
+    returns: company
+    default_sort: most_recent_raise
+    sort_options:
+      [most_recent_raise, oldest_raise, most_recent_founded, oldest_founded,
+       largest_valuation, smallest_valuation, largest_total_raise,
+       smallest_total_raise, most_funding_rounds, most_investors]
+    note: "sort_by is IGNORED when company.search_query is set (relevance ordering)."
+    pagination: { page: {type: int, default: 0}, page_size: {type: int, default: 10, min: 1, max: 500} }
+    blocks:
+      identifiers:
+        ids: { type: uuid_array, resolver: company }
+        domains: { type: string_array, max: 100 }
+        linkedin_urls: { type: string_array, max: 100 }
+        crunchbase_urls: { type: string_array, max: 100 }
+      company:
+        search_query: { type: string }
+        min_relevance: { type: number, min: 0, max: 1, requires: search_query }
+        locations: { type: string_array, resolver: location }
+        industries: { type: string_array, resolver: industry }
+        super_categories: { type: string_array, resolver: industry }
+        employee_count: { type: enum_array, enum_ref: employee_count }
+        ipo_status: { type: enum_array, enum_ref: ipo_status_basic }
+        total_raised_min: { type: number }
+        total_raised_max: { type: number }
+      latest_deal:
+        financing_types: { type: financing_type_object_array }
+        size_min: { type: number }
+        size_max: { type: number }
+        date_start: { type: iso_date }
+        date_end: { type: iso_date }
+        created_start: { type: iso_date }
+        created_end: { type: iso_date }
+        investor_ids: { type: uuid_array, resolver: investor }
+      investors:
+        investor_ids: { type: uuid_array, resolver: investor }   # any round ever
+        people_ids: { type: uuid_array, resolver: people }
+
+  # ---------------------------------------------------------------------------
+  "POST /investors":
+    returns: investor
+    default_sort: most_recent_deal
+    sort_options: [most_recent_deal, recent_deals, deals_led_ltm, total_deals, matching_deals]
+    pagination: { page: {type: int, default: 0}, page_size: {type: int, default: 10, min: 1, max: 500} }
+    blocks:
+      identifiers:
+        ids: { type: uuid_array, resolver: investor }
+        domains: { type: string_array, max: 100 }
+        linkedin_urls: { type: string_array, max: 100 }
+        crunchbase_urls: { type: string_array, max: 100 }
+      investor:
+        locations: { type: string_array, resolver: location }   # investor HQ
+        employee_count: { type: enum_array, enum_ref: employee_count }
+      company_investments:
+        company_ids: { type: uuid_array, resolver: company }
+        search_query: { type: string }
+        min_relevance: { type: number, min: 0, max: 1, requires: search_query }
+        locations: { type: string_array, resolver: location }
+        industries: { type: string_array, resolver: industry }
+        super_categories: { type: string_array, resolver: industry }
+        employee_count: { type: enum_array, enum_ref: employee_count }
+        ipo_status: { type: enum_array, enum_ref: ipo_status_basic }
+        total_raised_min: { type: number }
+        total_raised_max: { type: number }
+        financing_types: { type: financing_type_object_array }
+        deal_size_min: { type: number }
+        deal_size_max: { type: number }
+        deal_start_date: { type: iso_date }
+        deal_end_date: { type: iso_date }
+        only_lead_deals: { type: boolean, default: false }
+        min_matching_deals: { type: int, min: 1 }
+
+  # ---------------------------------------------------------------------------
+  "POST /people":
+    returns: person
+    person_type: { enum: [company, investor, any], default: any }
+    default_sort: most_recent_deal_date
+    sort_options:
+      [most_recent_deal_date, total_raised, latest_deal_size, name,
+       total_deal_count, deal_count_last_12_months, lead_deal_count,
+       lead_deal_count_last_12_months, filtered_deal_count]
+    note: >
+      search_query in company or investor.deals OVERRIDES sort_by (relevance).
+      Setting any `company.*` field implies person has a current employer.
+      Setting any `investor.*` field implies person is investor-flagged.
+    pagination: { page: {type: int, default: 0}, page_size: {type: int, default: 10, min: 1, max: 500} }
+    blocks:
+      identifiers:
+        ids: { type: uuid_array, resolver: people }
+        linkedin_urls: { type: string_array, max: 100 }
+        crunchbase_urls: { type: string_array, max: 100 }
+        twitter_urls: { type: string_array, max: 100 }
+      person:
+        roles: { type: enum_array, enum_ref: person_role }
+        contact_types: { type: enum_array, enum_ref: person_contact_type }
+        job_titles: { type: string_array }          # normalized keys e.g. ceo, cto, vp-engineering
+        education_schools: { type: string_array }    # e.g. stanford-university, mit
+        linkedin_companies: { type: string_array }   # e.g. google, meta
+      company:
+        search_query: { type: string }
+        min_relevance: { type: number, min: 0, max: 1, requires: search_query }
+        ids: { type: uuid_array, resolver: company }
+        locations: { type: string_array, resolver: location }
+        industries: { type: string_array, resolver: industry }
+        super_categories: { type: string_array, resolver: industry }
+        employee_count: { type: enum_array, enum_ref: employee_count }
+        ipo_status: { type: enum_array, enum_ref: ipo_status_extended }   # extended set here!
+        total_raised_min: { type: number }
+        total_raised_max: { type: number }
+        investor_people_ids: { type: uuid_array, resolver: people }
+        latest_deal:
+          financing_types: { type: financing_type_object_array }
+          size_min: { type: number }
+          size_max: { type: number }
+          date_start: { type: iso_date }
+          date_end: { type: iso_date }
+          investor_ids: { type: uuid_array, resolver: investor }
+          investor_locations: { type: string_array, resolver: location }
+      investor:
+        ids: { type: uuid_array, resolver: investor }
+        domains: { type: string_array, max: 100 }
+        linkedin_urls: { type: string_array, max: 100 }
+        crunchbase_urls: { type: string_array, max: 100 }
+        permalinks: { type: string_array, max: 100 }
+        locations: { type: string_array, resolver: location }
+        employee_count: { type: enum_array, enum_ref: employee_count }
+        deals:
+          search_query: { type: string }
+          min_relevance: { type: number, min: 0, max: 1, requires: search_query }
+          investment_type: { type: enum, enum_ref: investment_type, default: all }
+          only_lead_deals: { type: boolean, default: false }
+          min_matching_deals: { type: int, min: 1 }
+          financing_types: { type: financing_type_object_array }
+          size_min: { type: number }
+          size_max: { type: number }
+          date_start: { type: iso_date }
+          date_end: { type: iso_date }
+          industries: { type: string_array, resolver: industry }
+          super_categories: { type: string_array, resolver: industry }
+          portfolio_locations: { type: string_array, resolver: location }
+          portfolio_employee_count: { type: enum_array, enum_ref: employee_count }
+          ipo_status: { type: enum_array, enum_ref: ipo_status_basic }
+          total_raised_min: { type: number }
+          total_raised_max: { type: number }

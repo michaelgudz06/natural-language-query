@@ -1,0 +1,4 @@
+pyyaml>=6.0
+# for the LLM planner path (OpenAI-compatible: OpenAI, OpenRouter, Gemini):
+openai>=1.40
+certifi>=2024.0    # CA bundle so urllib can verify the Fundable API TLS cert
