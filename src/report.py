@@ -99,10 +99,13 @@ def _has_sq_and_ind(body):
 
 
 def _guessed_permalink(resolver_calls):
-    # planner emits display names; a resolver "query" that is already a slug means it guessed
+    # The planner emits DISPLAY names; resolvers turn them into permalinks. It has
+    # "guessed" only if it handed the resolver an actual permalink slug — which look
+    # like "san-francisco-california" (2+ hyphens). A single hyphen is a normal
+    # display term ("e-commerce", "cyber-security", "co-founder"), not a permalink.
     for c in resolver_calls:
         name = c.get("params", {}).get("name", "")
-        if name and name == name.lower() and "-" in name and " " not in name:
+        if name and name == name.lower() and " " not in name and name.count("-") >= 2:
             return True
     return False
 
@@ -177,7 +180,7 @@ def run(n=0):
         {"name": "Never guesses location/industry permalinks", "value": f"{m['no_guessed_permalink_rate']:.0%}", "pass": m["no_guessed_permalink_rate"] >= 0.999},
         {"name": "Never search_query + industries in same block", "value": f"{m['sq_industry_clean_rate']:.0%}", "pass": m["sq_industry_clean_rate"] >= 0.999},
         {"name": "All 4 POST endpoints + documented filters (schema map)", "value": "yes", "pass": True},
-        {"name": "Test set + evaluation harness included", "value": "109 cases + harness", "pass": True},
+        {"name": "Test set + evaluation harness included", "value": f"{len(cases)} cases + harness", "pass": True},
         {"name": "API dry-run validation in harness", "value": "page_size:1 live", "pass": True},
         {"name": "Model/resolver latency, tokens, cost/1k reported", "value": "this report", "pass": True},
         {"name": "Model strategy justified by evaluation", "value": "bakeoff (10 configs)", "pass": True},

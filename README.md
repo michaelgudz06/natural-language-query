@@ -10,9 +10,9 @@ query, and runs it live. Single model (`gemini-3.5-flash-lite`), no router.
 
 ```bash
 cd ~/fundable-query-planner
-python3 tests/test_prod.py     # production-logic unit tests (offline, no keys) → 13/13
+python3 tests/test_prod.py     # production-logic unit tests (offline, no keys) → 18/18
 python3 tests/test_smoke.py    # schema/pipeline unit tests (offline)           → 11/11
-python3 serve.py               # live 3-tab demo at localhost:8000  (needs keys)
+python3 serve.py               # live 4-tab demo at localhost:8000  (needs keys)
 python3 src/report.py          # full acceptance scorecard, live    (needs keys)
 ```
 
@@ -37,8 +37,8 @@ schema/     schema_map.yaml — the full Fundable API contract (all 4 endpoints)
 src/        the planner (planner, pipeline, resolvers, compiler, schema, extractors,
             pathmap, exclude, filters_view) + eval tooling (report, model_compare,
             arch_bakeoff, calibrate, harness)
-tests/      test_set.json (109 labeled cases) + test_prod.py + test_smoke.py
-serve.py    the live 3-tab demo (Try · Model comparison · Report)
+tests/      test_set.json (117 labeled cases, all 4 endpoints incl. people) + test_prod.py + test_smoke.py
+serve.py    the live 4-tab demo (Try · Model comparison · Test set · Report)
 ```
 
 Entry point in code: `pipeline.production_pipeline()`.

@@ -90,6 +90,60 @@ def _fetch(route: str, body: dict, page_size: int) -> dict:
         return {"count": None, "companies": []}
 
 
+def testset_stats():
+    """Live coverage stats for the Test-set tab — computed from the labels, so it's
+    evidence (not a claim) that the cases exercise the planner in many ways."""
+    import re as _re
+    from collections import Counter
+    cases = json.load(open(os.path.join(os.path.dirname(__file__), "tests", "test_set.json")))["cases"]
+
+    def paths(c):
+        return " ".join(c.get("expected_filter_paths", []))
+
+    def rez(c, t):
+        return any(r["type"] == t for r in c.get("expected_resolvers", []))
+
+    dims = {
+        "Industry lookup": lambda c: rez(c, "industry"),
+        "Location lookup": lambda c: rez(c, "location"),
+        "Multiple locations (2+)": lambda c: sum(r["type"] == "location" for r in c.get("expected_resolvers", [])) >= 2,
+        "Named investor / company": lambda c: rez(c, "investor") or rez(c, "company"),
+        "Funding round": lambda c: "financing_types" in paths(c),
+        "Open-ended round (C+)": lambda c: bool(_re.search(r"\+|or higher|and above|or later", c["input"], _re.I)),
+        "Money filter ($)": lambda c: any(k in paths(c) for k in ("size_min", "size_max", "total_raised")),
+        "Date filter": lambda c: "date_start" in paths(c) or "date_end" in paths(c),
+        "Employee count": lambda c: "employee_count" in paths(c),
+        "IPO status": lambda c: "ipo_status" in paths(c),
+        "Sort order": lambda c: "sort_by" in paths(c),
+        "Semantic search fallback": lambda c: "search_query" in paths(c),
+        "Person role / title / school": lambda c: "person." in paths(c),
+        "Investor-side filters": lambda c: "investor." in paths(c) or "company_investments" in paths(c),
+        "Negative test (forbidden field)": lambda c: bool(c.get("forbidden_paths")),
+        "Edge / ambiguous on purpose": lambda c: "EDGE" in (c.get("notes") or "").upper(),
+    }
+    by = Counter(c["expected_route"].split("/")[-1] for c in cases)
+    picks = {}
+    for c in cases:
+        r = c["expected_route"].split("/")[-1]
+        picks.setdefault(r, c)
+    samples = [{
+        "input": c["input"], "route": c["expected_route"],
+        "resolvers": [f"{x['type']}: {x['query']}" for x in c.get("expected_resolvers", [])],
+        "filters": c.get("expected_filter_paths", []),
+        "forbidden": c.get("forbidden_paths", []), "notes": c.get("notes", ""),
+    } for c in picks.values()]
+    return {
+        "total": len(cases),
+        "by_route": [{"route": f"POST /{k}", "n": by[k]} for k in ("deals", "companies", "investors", "people")],
+        "distinct": len(set(c["input"] for c in cases)),
+        "with_notes": sum(1 for c in cases if c.get("notes")),
+        "negative": sum(1 for c in cases if c.get("forbidden_paths")),
+        "edge": sum(1 for c in cases if "EDGE" in (c.get("notes") or "").upper()),
+        "coverage": [{"name": k, "n": sum(1 for c in cases if f(c))} for k, f in dims.items()],
+        "samples": samples,
+    }
+
+
 def plan(query: str, overrides: list | None = None) -> dict:
     t0 = time.time()
     p = pipe()
@@ -128,6 +182,11 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, PAGE, "text/html; charset=utf-8")
         elif self.path == "/app.js":
             self._send(200, APP_JS, "application/javascript; charset=utf-8")
+        elif self.path == "/api/testset":
+            try:
+                self._send(200, json.dumps(testset_stats()))
+            except Exception as e:  # noqa: BLE001
+                self._send(500, json.dumps({"error": str(e)[:200]}))
         elif self.path == "/api/report":
             p = os.path.join(os.path.dirname(__file__), "docs", "report.json")
             if os.path.exists(p):
@@ -248,6 +307,7 @@ table.cmp tr.win td:first-child{color:var(--accent);font-weight:600}
 <div class="tabs">
   <button class="tab active" data-tab="try">Try</button>
   <button class="tab" data-tab="compare">Model comparison</button>
+  <button class="tab" data-tab="tests">Test set</button>
   <button class="tab" data-tab="report">Report</button>
 </div>
 
@@ -313,6 +373,7 @@ table.cmp tr.win td:first-child{color:var(--accent);font-weight:600}
   <p class="subtle">"Calls/query" = 1.00 for the router means it never escalated — the cheap model was always confident enough. So the router is pure overhead here; single model is the same accuracy, simpler.</p>
 </div>
 
+<div id="panel-tests" class="panel" hidden></div>
 <div id="panel-report" class="panel" hidden></div>
 
 </div>
@@ -354,9 +415,58 @@ document.querySelectorAll('.tab').forEach(t=>{
     document.getElementById('panel-try').hidden = which!=='try';
     document.getElementById('panel-compare').hidden = which!=='compare';
     document.getElementById('panel-report').hidden = which!=='report';
+    document.getElementById('panel-tests').hidden = which!=='tests';
     if(which==='report') loadReport();
+    if(which==='tests') loadTests();
   };
 });
+
+let testsLoaded=false;
+async function loadTests(){
+  if(testsLoaded) return; testsLoaded=true;
+  const el=document.getElementById('panel-tests');
+  el.innerHTML='<div class="step"><span class="spin"></span> <span class="muted">Loading test set…</span></div>';
+  try{ renderTests(el, await (await fetch('/api/testset')).json()); }
+  catch(e){ el.innerHTML='<div class="step"><span class="pill warn">error</span> '+esc(''+e)+'</div>'; testsLoaded=false; }
+}
+function renderTests(el,d){
+  let h='';
+  h+='<div class="banner"><div class="h">The test set — '+d.total+' hand-labeled cases</div>'+
+     '<div class="m" style="font-size:15px;font-weight:500;line-height:1.5">Each case is a question <b>plus the correct answer</b>: which endpoint it should hit, what it should look up, which filters must appear, and what must <b>not</b>. The planner is scored against this answer key on every change.</div></div>';
+  // how built
+  h+='<h2 class="sec">How it was built</h2><div class="step" style="font-size:14px;line-height:1.6">'+
+     '<b>1 · Spec coverage</b> — ~15 cases per endpoint from the required scenarios.<br>'+
+     '<b>2 · Stress cases</b> — deliberately hard: aliases, round ranges, multi-location, disambiguation, semantic fallback, person filters.<br>'+
+     '<b>3 · Regression cases</b> — <b>every bug we found became a permanent test</b>, so it can\'t come back.</div>';
+  // balance
+  h+='<h2 class="sec">All four endpoints — not just /companies</h2><div class="twrap"><table class="cmp"><thead><tr><th>Endpoint</th><th>Cases</th></tr></thead><tbody>';
+  d.by_route.forEach(r=>h+='<tr><td>'+esc(r.route)+'</td><td>'+r.n+'</td></tr>');
+  h+='</tbody></table></div>';
+  // coverage grid
+  h+='<h2 class="sec">What the cases exercise (a case usually covers several)</h2>';
+  h+='<div class="filters">';
+  d.coverage.filter(c=>c.n>0).forEach(c=>{h+='<span class="fchip"><span class="fk">'+esc(c.name)+'</span><span class="fv">'+c.n+'</span></span>';});
+  h+='</div>';
+  // why good
+  h+='<h2 class="sec">Why these are strong test cases</h2><div class="scorecard">'+
+     '<span class="sc"><b>'+d.distinct+'/'+d.total+'</b> distinct questions (no padding)</span>'+
+     '<span class="sc"><b>'+d.negative+'</b> negative tests (assert a field must NOT appear)</span>'+
+     '<span class="sc"><b>'+d.edge+'</b> edge / ambiguous on purpose</span>'+
+     '<span class="sc"><b>'+d.with_notes+'</b> carry a written "why"</span></div>'+
+     '<p class="subtle" style="margin-top:12px">Negative + edge cases are what catch <i>silent</i> wrong behavior — most test sets skip them, which is how bugs reach prod. The score isn\'t inflated by softballs.</p>';
+  // samples
+  h+='<h2 class="sec">Example cases (one per endpoint)</h2>';
+  d.samples.forEach(s=>{
+    h+='<div class="step"><div class="row" style="margin-bottom:8px"><span class="pill route">'+esc(s.route)+'</span><span class="big">"'+esc(s.input)+'"</span></div>';
+    if(s.resolvers.length) h+='<div class="lu"><span class="t">looks up</span><span class="val">'+s.resolvers.map(esc).join(' · ')+'</span></div>';
+    if(s.filters.length) h+='<div class="lu"><span class="t">filters</span><span>'+s.filters.map(esc).join(' · ')+'</span></div>';
+    if(s.forbidden.length) h+='<div class="lu"><span class="t" style="color:var(--warn)">must NOT</span><span class="muted">'+s.forbidden.map(esc).join(' · ')+'</span></div>';
+    if(s.notes) h+='<div class="faint" style="margin-top:8px">'+esc(s.notes)+'</div>';
+    h+='</div>';
+  });
+  h+='<p class="subtle">Run it yourself: <code>python3 src/report.py</code> scores all '+d.total+' cases live against the API.</p>';
+  el.innerHTML=h;
+}
 
 let reportLoaded=false;
 async function loadReport(){

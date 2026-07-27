@@ -125,6 +125,12 @@ prompts:
       - Ambiguous "find <adj> startups" defaults to companies UNLESS the user
         clearly asks for funding rounds. If genuinely ambiguous, lower confidence
         and add a clarification warning.
+      - The OBJECT NOUN wins over a funding phrase. "companies/startups that
+        raised Series A" -> POST /companies (the round is a FILTER on the company).
+        Choose /deals only when the user asks for the rounds/raises/deals THEMSELVES
+        ("Series A rounds in fintech", "deals over $20M last quarter").
+      - "angels" / "angel investors" are individual PEOPLE -> POST /people, never
+        /investors (which is for funds and firms).
 
   user_template: |
     Request: "{query}"

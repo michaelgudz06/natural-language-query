@@ -31,10 +31,13 @@ exact.** That's why request bodies are 100% API-valid regardless of the model.
 
 ## 2. What it handles
 
-- **All 4 endpoints** with their documented filters
+- **All 4 endpoints** — /deals, /companies, /investors, **/people** — with their
+  documented filters (it picks the right one from the question, not always /companies)
+- **People search** — "ex-Google founders in AI", "CTOs of healthcare startups in
+  Boston", "Stanford founders" → extracts person roles, job titles, schools, and past
+  employers (the exact same NL→filters experience, but for the people tab)
 - **Aliases** — industry spellings Fundable needs (`healthcare`→`health-care`,
-  `cybersecurity`→`cyber-security`) and 90 city nicknames (SF, Big Apple, Beantown,
-  ATX, NOLA, Bay Area, …)
+  `cybersecurity`→`cyber-security`) and 90 city nicknames (SF, Big Apple, Beantown, …)
 - **Round ranges** — "Series C+" → Series C through M
 - **Multiple locations** — "SF, NYC, and London"
 - **Disambiguation** — ambiguous names (Springfield) become clickable choices
@@ -43,45 +46,47 @@ exact.** That's why request bodies are 100% API-valid regardless of the model.
 - **Safety net** — a query that resolves to no filters is flagged, never silently
   returns "everything"
 
-## 3. Results — full 109-case live evaluation
+## 3. Results — full live evaluation (117 labeled cases)
 
 | Metric | Result | Target |
 |---|---|---|
-| Route accuracy | **93%** | ≥90% ✅ |
+| Route accuracy | **99%** | ≥90% ✅ |
 | Request bodies API-valid | **100%** | ≥95% ✅ |
 | JSON valid | **100%** | ≥95% ✅ |
-| Cost / 1,000 queries | **~$0.69** | — |
-| Model latency p50 / p95 | 1.1s / 1.6s | — |
-| End-to-end incl. parallel lookups p50 / p95 | 2.1s / 2.7s | — |
-| **Acceptance criteria** | **10 / 11 pass** | — |
+| Resolver-backed fields (F1) | **99%** | ≥95% ✅ |
+| Cost / 1,000 queries | **~$0.90** | — |
+| Model latency p50 / p95 | 1.0s / 1.7s | — |
+| End-to-end incl. parallel lookups p50 / p95 | 1.9s / 2.6s | — |
+| **Acceptance criteria** | **11 / 11 pass** ✅ | — |
 
-The one below bar — resolver-backed fields 92% vs 95% — measures how closely the
-model's list of "things to look up" matches our hand-written answer key. It's label
-agreement, not broken output, and rises as the test set is refined.
+Per-endpoint route accuracy: /companies 100% · /deals 100% · /people 100% · /investors 94%.
 
-Regenerate anytime: `python3 src/report.py` (writes the Report tab's data).
+Regenerate anytime: `python3 src/report.py` (writes the Report tab's data, live).
 
-## 4. The demo — 3 tabs at localhost:8000
+## 4. The demo — 4 tabs at localhost:8000
 
 **Try** — type a question, watch it think. Try these to hit every feature:
 1. `Series B fintech companies in New York that raised over $20M` — the basics
-2. `AI startups in Beantown and the Big Apple` — nickname aliases resolving
-3. `fintech companies, Series B+, everywhere but America` — round range + exclusion
-4. `fintech companies in Springfield` — click a disambiguation option to lock it in
+2. `Ex-Google founders in AI` — **people search** (roles + past employer + industry)
+3. `Stanford founders who raised seed in fintech` — person school filter
+4. `fintech companies, Series B+, everywhere but America` — round range + exclusion
+5. `Most active VC firms investing in climate` — proves it's not company-only
+6. `fintech companies in Springfield` — click a disambiguation option to lock it in
 
 Each shows: **how it decided** (model reasoning + time + cost) · **filters it enabled**
 · **what it looked up live** · **the query it built** · **live API result**.
 
-**Model comparison** — the models & architectures tested, with the "single model wins"
-verdict. **Report** — the acceptance scorecard + full metrics.
+**Model comparison** — every model tested (incl. Jacob's Chinese models: qwen, deepseek,
+minimax) with the "single model wins" verdict. **Test set** — what the 117 cases cover
+and why they're strong. **Report** — the 11/11 acceptance scorecard + per-endpoint accuracy.
 
 ## 5. Run it / test it
 
 ```bash
 cd ~/fundable-query-planner
-python3 tests/test_prod.py     # production-logic unit tests (offline)  → 13/13
+python3 tests/test_prod.py     # production-logic unit tests (offline)  → 18/18
 python3 tests/test_smoke.py    # schema/pipeline unit tests (offline)   → 11/11
-python3 serve.py               # the live 3-tab demo (needs keys)
+python3 serve.py               # the live 4-tab demo (needs keys)
 python3 src/report.py          # full acceptance scorecard, live (needs keys)
 ```
 The unit tests run offline with no keys (good for CI). The demo + report need a
@@ -111,7 +116,7 @@ FUNDABLE_BASE_URL=https://www.tryfundable.ai/api/v1
 | **The planner** | `src/` — planner, pipeline, resolvers, compiler, schema, extractors, pathmap, exclude, filters_view |
 | **Eval tooling** | `src/` — report, model_compare, arch_bakeoff, calibrate, harness |
 | **Config** | `config/` (prompts, aliases, models) + `schema/schema_map.yaml` |
-| **Tests** | `tests/test_set.json` (109 cases) + `test_prod.py`, `test_smoke.py` |
+| **Tests** | `tests/test_set.json` (117 cases, all 4 endpoints) + `test_prod.py`, `test_smoke.py` |
 | **Demo** | `serve.py`, `Start Tester.command` |
 
 ## 7. Glossary (plain English)

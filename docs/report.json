@@ -1,6 +1,6 @@
 {
-  "generated": "2026-07-23",
-  "n": 109,
+  "generated": "2026-07-26",
+  "n": 117,
   "production_model": "google/gemini-3.5-flash-lite",
   "provider": "OpenRouter \u2192 Google",
   "pricing_per_m": {
@@ -9,23 +9,41 @@
   },
   "parallel_resolvers": true,
   "metrics": {
-    "route_accuracy": 0.926605504587156,
+    "route_accuracy_by_endpoint": {
+      "companies": {
+        "n": 42,
+        "accuracy": 1.0
+      },
+      "deals": {
+        "n": 29,
+        "accuracy": 1.0
+      },
+      "investors": {
+        "n": 18,
+        "accuracy": 0.9444444444444444
+      },
+      "people": {
+        "n": 28,
+        "accuracy": 1.0
+      }
+    },
+    "route_accuracy": 0.9914529914529915,
     "api_valid_rate": 1.0,
     "json_validity_rate": 1.0,
-    "filter_accuracy": 0.7818042813455658,
-    "resolver_field_f1": 0.9785932721712539,
+    "filter_accuracy": 0.8601139601139601,
+    "resolver_field_f1": 0.9914529914529915,
     "industry_first_rate": 1.0,
     "sq_industry_clean_rate": 1.0,
     "no_guessed_permalink_rate": 1.0,
-    "avg_in_tokens": 1021,
-    "avg_out_tokens": 156,
-    "cost_per_1k": 0.697,
-    "model_p50_ms": 1133.6,
-    "model_p95_ms": 1674.3,
-    "plan_excl_resolver_p50_ms": 1134,
-    "plan_excl_resolver_p95_ms": 1674,
-    "plan_incl_resolver_p50_ms": 2090,
-    "plan_incl_resolver_p95_ms": 2764
+    "avg_in_tokens": 1383,
+    "avg_out_tokens": 193,
+    "cost_per_1k": 0.897,
+    "model_p50_ms": 1038.9,
+    "model_p95_ms": 1668.1,
+    "plan_excl_resolver_p50_ms": 1039,
+    "plan_excl_resolver_p95_ms": 1668,
+    "plan_incl_resolver_p50_ms": 1872,
+    "plan_incl_resolver_p95_ms": 2644
   },
   "models_tested": [
     {
@@ -99,12 +117,48 @@
       "cost_per_1k": 0.13,
       "model_p50": 903,
       "model_p95": 1625
+    },
+    {
+      "model": "qwen/qwen3.6-flash",
+      "provider": "OpenRouter/Alibaba",
+      "price_in": 0.188,
+      "price_out": 1.125,
+      "route_acc": 0.98,
+      "avg_in": 766,
+      "avg_out": 973,
+      "cost_per_1k": 1.24,
+      "model_p50": 7098,
+      "model_p95": 17087
+    },
+    {
+      "model": "minimax/minimax-m2.7",
+      "provider": "OpenRouter/MiniMax",
+      "price_in": 0.3,
+      "price_out": 1.2,
+      "route_acc": 0.96,
+      "avg_in": 1407,
+      "avg_out": 473,
+      "cost_per_1k": 0.99,
+      "model_p50": 2249,
+      "model_p95": 4827
+    },
+    {
+      "model": "deepseek/deepseek-v4-flash",
+      "provider": "OpenRouter/DeepSeek",
+      "price_in": 0.098,
+      "price_out": 0.196,
+      "route_acc": 0.95,
+      "avg_in": 1004,
+      "avg_out": 297,
+      "cost_per_1k": 0.157,
+      "model_p50": 7057,
+      "model_p95": 105762
     }
   ],
   "acceptance": [
     {
       "name": "Route selection accuracy \u2265 90%",
-      "value": "93%",
+      "value": "99%",
       "pass": true
     },
     {
@@ -114,7 +168,7 @@
     },
     {
       "name": "Resolver-backed fields \u2265 95% correct",
-      "value": "F1 98%",
+      "value": "F1 99%",
       "pass": true
     },
     {
@@ -139,7 +193,7 @@
     },
     {
       "name": "Test set + evaluation harness included",
-      "value": "109 cases + harness",
+      "value": "117 cases + harness",
       "pass": true
     },
     {
@@ -161,43 +215,8 @@
   "all_pass": true,
   "route_misses": [
     {
-      "q": "Fintech companies in New York that raised Series A.",
-      "exp": "POST /companies",
-      "got": "POST /deals"
-    },
-    {
-      "q": "AI companies in San Francisco that raised seed in the last 12 months.",
-      "exp": "POST /companies",
-      "got": "POST /deals"
-    },
-    {
-      "q": "Most active angels investing in AI.",
-      "exp": "POST /investors",
-      "got": "POST /people"
-    },
-    {
-      "q": "Angel investors active in AI in the last 12 months.",
-      "exp": "POST /people",
-      "got": "POST /investors"
-    },
-    {
-      "q": "Find seed-stage AI in SF.",
-      "exp": "POST /companies",
-      "got": "POST /deals"
-    },
-    {
       "q": "Accel investments in fintech.",
       "exp": "POST /investors",
-      "got": "POST /deals"
-    },
-    {
-      "q": "AI companies with 1001-5000 employees that raised Series C",
-      "exp": "POST /companies",
-      "got": "POST /deals"
-    },
-    {
-      "q": "Series B fintech companies in New York that raised over $20M",
-      "exp": "POST /companies",
       "got": "POST /deals"
     }
   ],

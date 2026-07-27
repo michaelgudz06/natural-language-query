@@ -50,7 +50,7 @@ sequential (3.7× faster)**. Resolver latency is reported separately from model 
 
 ## The model & architecture decision (from the bakeoff)
 
-**Models compared** (109 cases, planning quality, OpenRouter, live):
+**Models compared** (117 cases, planning quality, OpenRouter, live):
 
 | model | route acc | intent | $/1k | latency p50 |
 |---|---|---|---|---|
